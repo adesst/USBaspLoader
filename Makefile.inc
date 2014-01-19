@@ -23,7 +23,7 @@ DANGEROUS=0
 
 # PROGRAMMER contains AVRDUDE options to address your programmer
 # PROGRAMMER = -c pony-stk200
-PROGRAMMER = -c usbasp
+PROGRAMMER = -c stk500v1 -b 19200 -P /dev/ttyACM0
 
 #  since USBaspLoader supports HAVE_BLB11_SOFTW_LOCKBIT...
 LOCKOPT = -U lock:w:0x3f:m
@@ -98,7 +98,13 @@ DEFINES_2561             = #-DEMPTY
 
 # standard atmega8 needs BODLEVEL to be programed, since it is a 5V device
 # you may also want to UNprogram  SUT1 to get a SLOWER bootup (lfuse then would be 0x3f)
-FUSEOPT_8            = -U lfuse:w:0x1f:m -U hfuse:w:0xc0:m
+
+# This is the original FUSEOPT_8, in my case the device is not detected by 
+# Fedora19 64Bit with kernel 3.11.10-200.fc19.x86_64
+#FUSEOPT_8            = -U lfuse:w:0x1f:m -U hfuse:w:0xc0:m
+
+# After setting this fuse bit everything works as expected
+FUSEOPT_8            = -U lfuse:w:0xef:m -U hfuse:w:0xc9:m
 BOOTLOADER_ADDRESS_8 = 0x1800
 DEFINES_8            = -DCONFIG_USE__EXCESSIVE_ASSEMBLER -DCONFIG_NO__NEED_WATCHDOG -DCONFIG_NO__PRECISESLEEP
 
