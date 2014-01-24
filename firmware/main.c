@@ -23,12 +23,12 @@
 #if 0
 /*
  * 29.09.2012 /  30.09.2012
- * 
+ *
  * Since cpufunc.h is not needed in this context and
  * since it is not available in all toolchains, this include
  * becomes deactivated by github issue-report.
  * (In case of trouble it remains in sourcecode for reactivation.)
- * 
+ *
  * The autor would like to thank Lena-M for reporting this
  * issue (https://github.com/baerwolf/USBaspLoader/issues/1).
  */
@@ -229,13 +229,13 @@ static void __attribute__((naked,__noreturn__)) leaveBootloader(void);
 static void leaveBootloader(void) {
   asm  volatile  (
   "cli\n\t"
-  "sbi		%[usbddr],	%[usbminus]\n\t"  
+  "sbi		%[usbddr],	%[usbminus]\n\t"
   "cbi		%[port],	%[bit]\n\t"
   "out		%[usbintrenab],	__zero_reg__\n\t"
   "out		%[usbintrcfg],	__zero_reg__\n\t"
   "ldi		r31,		%[ivce]\n\t"
   "out		%[mygicr],	r31\n\t"
-  "out		%[mygicr],	__zero_reg__\n\t"  
+  "out		%[mygicr],	__zero_reg__\n\t"
   "rjmp		nullVector\n\t"
   :
   : [port]        "I" (_SFR_IO_ADDR(PIN_PORT(JUMPER_PORT))),
@@ -244,7 +244,7 @@ static void leaveBootloader(void) {
     [usbintrcfg]  "I" (_SFR_IO_ADDR(USB_INTR_CFG)),
     [usbddr]      "I" (_SFR_IO_ADDR(USBDDR)),
     [usbminus]    "I" (USBMINUS),
-    [mygicr]      "I" (_SFR_IO_ADDR(GICR)),	      
+    [mygicr]      "I" (_SFR_IO_ADDR(GICR)),
     [ivce]        "I" (1<<IVCE)
 );
 }
@@ -366,7 +366,7 @@ defined (__AVR_ATmega2561__)
   }else{
       /* ignore all others, return default value == 0 */
   }
-        
+
   return rval;
 }
 
@@ -436,7 +436,7 @@ uchar   isLast;
 "usbFunctionWrite_flashloop:\n\t"
 	  "subi		%[len], 2\n\t"
 	  "brlo		usbFunctionWrite_finished\n\t"
-	  
+
 #if HAVE_BLB11_SOFTW_LOCKBIT
 	  "cpi		r31, %[blsaddrhi]\n\t"			/* accelerated BLB11_SOFTW_LOCKBIT check */
 	  "brsh		usbFunctionWrite_finished\n\t"
@@ -483,7 +483,7 @@ uchar   isLast;
 // 	  "rcall	usbFunctionWrite_waitA\n\t"
 
 
-"usbFunctionWrite_skippageisfull:\n\t"	  
+"usbFunctionWrite_skippageisfull:\n\t"
 	  "adiw		r30,		0x2\n\t"
 	  "rjmp		usbFunctionWrite_flashloop\n\t"
 
@@ -619,6 +619,11 @@ static void initForUsbConnectivity(void)
     usbInit();
     /* enforce USB re-enumerate: */
     usbDeviceDisconnect();  /* do this while interrupts are disabled */
+
+#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
+    wdt_reset();
+#endif
+
 #if HAVE_UNPRECISEWAIT
     asm volatile (
       /*we really don't care what value Z has...
@@ -636,6 +641,11 @@ static void initForUsbConnectivity(void)
 #else
     _delay_ms(260);         /* fake USB disconnect for > 250 ms */
 #endif
+
+#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
+    wdt_reset();
+#endif
+
     usbDeviceConnect();
     sei();
 }
@@ -651,20 +661,31 @@ int __attribute__((__noreturn__)) main(void)
     GICR = (1 << IVSEL); /* move interrupts to boot flash section */
 #endif
     if(bootLoaderCondition()){
-#if NEED_WATCHDOG
-#	if (defined(MCUSR) && defined(WDRF))
-	/* 
+//#if NEED_WATCHDOG
+#if 1
+//#	if (defined(MCUSR) && defined(WDRF))
+	/*
 	 * Fix issue 6: (special thanks to coldtobi)
-	 * 
+	 *
 	 * The WDRF bit in the MCUSR needs to be cleared first,
 	 * otherwise it is not possible to disable the watchdog
 	 */
+#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
+    wdt_enable(WDTO_1S);
+#else
 	MCUSR &= ~(_BV(WDRF));
-#	endif
 	wdt_disable();    /* main app may have enabled watchdog */
+#endif
+
+
 #endif
         initForUsbConnectivity();
         do{
+
+#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
+            wdt_reset();
+#endif
+
             usbPoll();
 #if BOOTLOADER_CAN_EXIT
 #if USE_EXCESSIVE_ASSEMBLER
@@ -674,7 +695,7 @@ asm  volatile  (
   "sbic		%[pin],		%[bit]\n\t"
   "subi		%[sil],		0x10\n\t"
   "rjmp		main_stayinloader_finished\n\t"
-  
+
   "main_stayinloader_smaller:\n\t"
   "cpi		%[sil],		0x2\n\t"
   "brlo		main_stayinloader_finished\n\t"
@@ -690,7 +711,7 @@ asm  volatile  (
 	if (stayinloader >= 0x10) {
 	  if (!bootLoaderCondition()) {
 	    stayinloader-=0x10;
-	  } 
+	  }
 	} else {
 	  if (bootLoaderCondition()) {
 	    if (stayinloader > 1) stayinloader-=2;
