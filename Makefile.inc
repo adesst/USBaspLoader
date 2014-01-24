@@ -6,7 +6,7 @@
 # License: GNU GPL v2 (see License.txt)
 
 F_CPU = 16000000
-DEVICE = atmega8
+DEVICE = atmega16
 
 # where the updating firmware should be located (starting address)
 FLASHADDRESS = 0x0000
@@ -104,7 +104,7 @@ DEFINES_2561             = #-DEMPTY
 #FUSEOPT_8            = -U lfuse:w:0x1f:m -U hfuse:w:0xc0:m
 
 # After setting this fuse bit everything works as expected
-FUSEOPT_8            = -U lfuse:w:0xef:m -U hfuse:w:0xc9:m
+FUSEOPT_8            = -U lfuse:w:0xef:m -U hfuse:w:0xC0:m
 BOOTLOADER_ADDRESS_8 = 0x1800
 DEFINES_8            = -DCONFIG_USE__EXCESSIVE_ASSEMBLER -DCONFIG_NO__NEED_WATCHDOG -DCONFIG_NO__PRECISESLEEP
 
