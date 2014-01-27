@@ -661,23 +661,23 @@ int __attribute__((__noreturn__)) main(void)
     GICR = (1 << IVSEL); /* move interrupts to boot flash section */
 #endif
     if(bootLoaderCondition()){
-//#if NEED_WATCHDOG
-#if 1
-//#	if (defined(MCUSR) && defined(WDRF))
-	/*
-	 * Fix issue 6: (special thanks to coldtobi)
-	 *
-	 * The WDRF bit in the MCUSR needs to be cleared first,
-	 * otherwise it is not possible to disable the watchdog
-	 */
+
 #if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
     wdt_enable(WDTO_1S);
 #else
-	MCUSR &= ~(_BV(WDRF));
-	wdt_disable();    /* main app may have enabled watchdog */
-#endif
+#   if NEED_WATCHDOG
+#	    if (defined(MCUSR) && defined(WDRF))
+	    /*
+	     * Fix issue 6: (special thanks to coldtobi)
+	     *
+	     * The WDRF bit in the MCUSR needs to be cleared first,
+	     * otherwise it is not possible to disable the watchdog
+	     */
 
-
+	    MCUSR &= ~(_BV(WDRF));
+	    wdt_disable();    /* main app may have enabled watchdog */
+#       endif
+#   endif
 #endif
         initForUsbConnectivity();
         do{
