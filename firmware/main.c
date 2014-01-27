@@ -620,10 +620,6 @@ static void initForUsbConnectivity(void)
     /* enforce USB re-enumerate: */
     usbDeviceDisconnect();  /* do this while interrupts are disabled */
 
-#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
-    wdt_reset();
-#endif
-
 #if HAVE_UNPRECISEWAIT
     asm volatile (
       /*we really don't care what value Z has...
@@ -642,10 +638,6 @@ static void initForUsbConnectivity(void)
     _delay_ms(260);         /* fake USB disconnect for > 250 ms */
 #endif
 
-#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
-    wdt_reset();
-#endif
-
     usbDeviceConnect();
     sei();
 }
@@ -661,30 +653,20 @@ int __attribute__((__noreturn__)) main(void)
     GICR = (1 << IVSEL); /* move interrupts to boot flash section */
 #endif
     if(bootLoaderCondition()){
-
-#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
-    wdt_enable(WDTO_1S);
-#else
-#   if NEED_WATCHDOG
-#	    if (defined(MCUSR) && defined(WDRF))
-	    /*
-	     * Fix issue 6: (special thanks to coldtobi)
-	     *
-	     * The WDRF bit in the MCUSR needs to be cleared first,
-	     * otherwise it is not possible to disable the watchdog
-	     */
-
-	    MCUSR &= ~(_BV(WDRF));
-	    wdt_disable();    /* main app may have enabled watchdog */
-#       endif
+#if NEED_WATCHDOG
+#	if (defined(MCUSR) && defined(WDRF))
+	/*
+	 * Fix issue 6: (special thanks to coldtobi)
+	 *
+	 * The WDRF bit in the MCUSR needs to be cleared first,
+	 * otherwise it is not possible to disable the watchdog
+	 */
+	MCUSR &= ~(_BV(WDRF));
+	wdt_disable();    /* main app may have enabled watchdog */
 #   endif
 #endif
         initForUsbConnectivity();
         do{
-
-#if defined (__AVR_ATmega16__) || defined (__AVR_ATmega32__)
-            wdt_reset();
-#endif
 
             usbPoll();
 #if BOOTLOADER_CAN_EXIT
